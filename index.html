@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ring the Gong 🔔</title>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #FF6B35 0%, #FFD700 40%, #C0392B 100%);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      color: #1a1a1a;
+    }
+
+    .page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1.5rem;
+      gap: 1.5rem;
+      text-align: center;
+    }
+
+    .title {
+      font-size: clamp(2rem, 6vw, 3.5rem);
+      font-weight: 900;
+      color: #fff;
+      text-shadow: 2px 3px 0 rgba(0,0,0,0.2);
+      letter-spacing: -1px;
+    }
+
+    .subtitle {
+      font-size: 1.1rem;
+      color: rgba(255,255,255,0.9);
+      font-weight: 500;
+    }
+
+    .create-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      width: 100%;
+      max-width: 480px;
+    }
+
+    .win-input {
+      padding: 1rem 1.2rem;
+      font-size: 1.1rem;
+      border: 3px solid rgba(255,255,255,0.6);
+      border-radius: 14px;
+      background: rgba(255,255,255,0.95);
+      outline: none;
+      width: 100%;
+      font-weight: 500;
+      transition: border-color 0.2s;
+    }
+    .win-input:focus { border-color: #fff; }
+
+    .btn {
+      padding: 1rem 2rem;
+      border: none;
+      border-radius: 14px;
+      font-size: 1.1rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform 0.1s, box-shadow 0.1s;
+      letter-spacing: 0.3px;
+    }
+    .btn:active { transform: scale(0.97); }
+
+    .btn-primary {
+      background: #fff;
+      color: #C0392B;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-primary:not(:disabled):hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.2); }
+
+    .btn-ring {
+      background: #C0392B;
+      color: #FFD700;
+      font-size: 1.4rem;
+      padding: 1.2rem 3rem;
+      border-radius: 18px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+      letter-spacing: 1px;
+    }
+    .btn-ring:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(0,0,0,0.3); }
+
+    .btn-share {
+      background: rgba(255,255,255,0.95);
+      color: #C0392B;
+      font-weight: 700;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    }
+    .btn-share:hover { transform: translateY(-2px); }
+
+    .btn-text {
+      background: transparent;
+      color: rgba(255,255,255,0.8);
+      font-size: 0.9rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      text-decoration: underline;
+      box-shadow: none;
+    }
+    .btn-text:hover { color: #fff; transform: none; }
+
+    .win-log {
+      width: 100%;
+      max-width: 480px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 16px;
+      padding: 1.2rem;
+      backdrop-filter: blur(4px);
+    }
+    .log-title {
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: rgba(255,255,255,0.7);
+      margin-bottom: 0.8rem;
+    }
+    .log-list { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; }
+    .log-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+    }
+    .log-win { color: #fff; font-weight: 600; text-align: left; }
+    .log-date { color: rgba(255,255,255,0.65); font-size: 0.78rem; white-space: nowrap; }
+
+    .win-display {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .win-emoji { font-size: 2.5rem; }
+    .win-text {
+      font-size: clamp(1.4rem, 4vw, 2.2rem);
+      font-weight: 900;
+      color: #fff;
+      text-shadow: 2px 3px 0 rgba(0,0,0,0.2);
+      max-width: 600px;
+    }
+
+    .gong-container {
+      filter: drop-shadow(0 8px 20px rgba(0,0,0,0.3));
+    }
+
+    .gong-wrapper {
+      display: inline-block;
+      transform-origin: top center;
+    }
+    .gong-wrapper.swinging {
+      animation: gong-swing 0.6s ease-in-out;
+    }
+    @keyframes gong-swing {
+      0%   { transform: rotate(0deg); }
+      20%  { transform: rotate(15deg); }
+      50%  { transform: rotate(-12deg); }
+      75%  { transform: rotate(8deg); }
+      90%  { transform: rotate(-4deg); }
+      100% { transform: rotate(0deg); }
+    }
+
+    .confetti-piece {
+      position: fixed;
+      top: -20px;
+      border-radius: 2px;
+      animation: confetti-fall linear forwards;
+      pointer-events: none;
+      z-index: 1000;
+    }
+    @keyframes confetti-fall {
+      0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
+      85%  { opacity: 1; }
+      100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+
+    // ── Helpers ──────────────────────────────────────────────────────────────
+
+    function encodeState(state) {
+      return btoa(JSON.stringify(state));
+    }
+
+    function decodeState(hash) {
+      try {
+        if (!hash || hash === '#') return null;
+        return JSON.parse(atob(hash.slice(1)));
+      } catch {
+        return null;
+      }
+    }
+
+    // ── Win Log ───────────────────────────────────────────────────────────────
+
+    const STORAGE_KEY = 'gong-wins';
+    const MAX_WINS = 10;
+
+    function loadWinLog() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+      } catch {
+        return [];
+      }
+    }
+
+    function saveWin(win) {
+      const log = loadWinLog();
+      const entry = { win, date: new Date().toISOString() };
+      const updated = [entry, ...log].slice(0, MAX_WINS);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    }
+
+    function formatRelativeDate(isoString) {
+      const diff = Date.now() - new Date(isoString).getTime();
+      const mins = Math.floor(diff / 60000);
+      const hours = Math.floor(mins / 60);
+      const days = Math.floor(hours / 24);
+      if (mins < 1) return 'just now';
+      if (mins < 60) return `${mins}m ago`;
+      if (hours < 24) return `${hours}h ago`;
+      return `${days}d ago`;
+    }
+
+    // ── Sound ─────────────────────────────────────────────────────────────────
+
+    function playGong() {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const partials = [
+        { freq: 110,  gain: 1.0  },
+        { freq: 303,  gain: 0.6  },
+        { freq: 594,  gain: 0.4  },
+        { freq: 987,  gain: 0.25 },
+        { freq: 1350, gain: 0.15 },
+      ];
+      const masterGain = ctx.createGain();
+      masterGain.gain.setValueAtTime(1.0, ctx.currentTime);
+      masterGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 3.0);
+      masterGain.connect(ctx.destination);
+      partials.forEach(({ freq, gain }) => {
+        const osc = ctx.createOscillator();
+        const oscGain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        oscGain.gain.value = gain;
+        osc.connect(oscGain);
+        oscGain.connect(masterGain);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 3.1);
+      });
+    }
+
+    // ── Confetti ──────────────────────────────────────────────────────────────
+
+    function fireConfetti() {
+      const colours = ['#FFD700','#FF6B35','#E63946','#2DC653','#4CC9F0','#9B5DE5','#F15BB5','#FF9F1C'];
+      for (let i = 0; i < 60; i++) {
+        const el = document.createElement('div');
+        el.className = 'confetti-piece';
+        el.style.left = (Math.random() * 100) + 'vw';
+        el.style.backgroundColor = colours[Math.floor(Math.random() * colours.length)];
+        el.style.animationDuration = (2 + Math.random() * 2) + 's';
+        el.style.animationDelay = (Math.random() * 0.5) + 's';
+        el.style.transform = 'rotate(' + (Math.random() * 360) + 'deg)';
+        el.style.width = (8 + Math.random() * 8) + 'px';
+        el.style.height = (10 + Math.random() * 10) + 'px';
+        el.addEventListener('animationend', () => el.remove(), { once: true });
+        document.body.appendChild(el);
+      }
+    }
+
+    // ── Gong SVG ──────────────────────────────────────────────────────────────
+
+    function GongSVG({ swinging }) {
+      return (
+        <div className={`gong-wrapper${swinging ? ' swinging' : ''}`}>
+          <svg viewBox="0 0 200 220" width="220" height="220" xmlns="http://www.w3.org/2000/svg">
+            <line x1="60" y1="60" x2="30" y2="210" stroke="#8B4513" strokeWidth="10" strokeLinecap="round"/>
+            <line x1="140" y1="60" x2="170" y2="210" stroke="#8B4513" strokeWidth="10" strokeLinecap="round"/>
+            <line x1="30" y1="170" x2="170" y2="170" stroke="#8B4513" strokeWidth="8" strokeLinecap="round"/>
+            <line x1="60" y1="60" x2="70" y2="30" stroke="#5C3317" strokeWidth="4"/>
+            <line x1="140" y1="60" x2="130" y2="30" stroke="#5C3317" strokeWidth="4"/>
+            <line x1="70" y1="30" x2="130" y2="30" stroke="#5C3317" strokeWidth="6" strokeLinecap="round"/>
+            <circle cx="100" cy="105" r="75" fill="#B8860B" stroke="#DAA520" strokeWidth="6"/>
+            <circle cx="100" cy="105" r="65" fill="#FFD700"/>
+            <circle cx="100" cy="105" r="45" fill="none" stroke="#B8860B" strokeWidth="4"/>
+            <circle cx="100" cy="105" r="18" fill="#B8860B"/>
+            <circle cx="100" cy="105" r="12" fill="#FFD700"/>
+            <ellipse cx="78" cy="80" rx="12" ry="8" fill="rgba(255,255,255,0.3)" transform="rotate(-30 78 80)"/>
+          </svg>
+        </div>
+      );
+    }
+
+    // ── Router Hook ───────────────────────────────────────────────────────────
+
+    function useHashState() {
+      const [state, setState] = React.useState(() => decodeState(window.location.hash));
+
+      React.useEffect(() => {
+        function onHashChange() {
+          setState(decodeState(window.location.hash));
+        }
+        window.addEventListener('hashchange', onHashChange);
+        return () => window.removeEventListener('hashchange', onHashChange);
+      }, []);
+
+      function navigateTo(newState) {
+        window.location.hash = encodeState(newState);
+      }
+
+      function clearHash() {
+        history.pushState('', document.title, window.location.pathname + window.location.search);
+        setState(null);
+      }
+
+      return { state, navigateTo, clearHash };
+    }
+
+    // ── Create View ───────────────────────────────────────────────────────────
+
+    function CreateView({ onCreate }) {
+      const [text, setText] = React.useState('');
+      const [wins, setWins] = React.useState(loadWinLog);
+
+      function handleSubmit(e) {
+        e.preventDefault();
+        const trimmed = text.trim();
+        if (!trimmed) return;
+        saveWin(trimmed);
+        setWins(loadWinLog());
+        onCreate(trimmed);
+      }
+
+      return (
+        <div className="page create-page">
+          <h1 className="title">Ring the Gong 🔔</h1>
+          <p className="subtitle">Celebrate something worth celebrating.</p>
+          <form onSubmit={handleSubmit} className="create-form">
+            <input
+              className="win-input"
+              type="text"
+              placeholder="What are we celebrating?"
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              maxLength={200}
+              autoFocus
+            />
+            <button className="btn btn-primary" type="submit" disabled={!text.trim()}>
+              Create Celebration 🎉
+            </button>
+          </form>
+          {wins.length > 0 && (
+            <div className="win-log">
+              <p className="log-title">Past Wins</p>
+              <ul className="log-list">
+                {wins.map((entry, i) => (
+                  <li key={i} className="log-item">
+                    <span className="log-win">
+                      {entry.win.length > 60 ? entry.win.slice(0, 60) + '…' : entry.win}
+                    </span>
+                    <span className="log-date">{formatRelativeDate(entry.date)}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // ── Celebration View ──────────────────────────────────────────────────────
+
+    function CelebrationView({ win, initiallyRung, onNewCelebration }) {
+      const [rung, setRung] = React.useState(initiallyRung);
+      const [swinging, setSwinging] = React.useState(false);
+      const [copied, setCopied] = React.useState(false);
+
+      function handleRing() {
+        // Double-rAF trick to restart CSS animation reliably
+        setSwinging(false);
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            setSwinging(true);
+            setTimeout(() => setSwinging(false), 650);
+          });
+        });
+
+        playGong();
+        fireConfetti();
+
+        if (!rung) {
+          window.location.hash = encodeState({ win, rung: true });
+          setRung(true);
+        }
+      }
+
+      function handleCopyLink() {
+        const preRungUrl = `${window.location.origin}${window.location.pathname}#${encodeState({ win, rung: false })}`;
+        navigator.clipboard.writeText(preRungUrl).then(() => {
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2500);
+        }).catch(() => {
+          // Fallback for older browsers
+          const el = document.createElement('textarea');
+          el.value = preRungUrl;
+          document.body.appendChild(el);
+          el.select();
+          document.execCommand('copy');
+          document.body.removeChild(el);
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2500);
+        });
+      }
+
+      return (
+        <div className="page celebration-page">
+          <div className="win-display">
+            <span className="win-emoji">🎉</span>
+            <h2 className="win-text">{win}</h2>
+          </div>
+          <div className="gong-container">
+            <GongSVG swinging={swinging} />
+          </div>
+          <button className="btn btn-ring" onClick={handleRing}>
+            {rung ? 'Ring it again 🔔' : 'RING IT 🔔'}
+          </button>
+          {rung && (
+            <button className="btn btn-share" onClick={handleCopyLink}>
+              {copied ? 'Copied! ✅' : 'Share this win 🔗'}
+            </button>
+          )}
+          <button className="btn btn-text" onClick={onNewCelebration}>
+            ← Celebrate something else
+          </button>
+        </div>
+      );
+    }
+
+    // ── App ───────────────────────────────────────────────────────────────────
+
+    function App() {
+      const { state, navigateTo, clearHash } = useHashState();
+
+      if (!state || !state.win) {
+        return <CreateView onCreate={(win) => navigateTo({ win, rung: false })} />;
+      }
+
+      return (
+        <CelebrationView
+          win={state.win}
+          initiallyRung={state.rung === true}
+          onNewCelebration={clearHash}
+        />
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+
+  </script>
+</body>
+</html>
