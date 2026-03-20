@@ -197,13 +197,13 @@
     // ── Helpers ──────────────────────────────────────────────────────────────
 
     function encodeState(state) {
-      return btoa(JSON.stringify(state));
+      return btoa(encodeURIComponent(JSON.stringify(state)));
     }
 
     function decodeState(hash) {
       try {
         if (!hash || hash === '#') return null;
-        return JSON.parse(atob(hash.slice(1)));
+        return JSON.parse(decodeURIComponent(atob(hash.slice(1))));
       } catch {
         return null;
       }
